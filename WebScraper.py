@@ -1,5 +1,7 @@
 from bs4 import BeautifulSoup
 from selenium import webdriver
+import csv
+from dateutil.parser import parse
 
 # whl 2017-2018 season: september 22 2017 to march 18 2018
 # whl 2017-2018 game codes: 1014621 to 1015412
@@ -13,47 +15,139 @@ from selenium import webdriver
 # qmjl 2017-2018 game codes: 26127 to 25784
 # qmjhl url: http://theqmjhl.ca/gamecentre/26127/boxscore
 
-leagueURLs = {"WHL":"http://whl.ca/gamecentre/", "OHL":"http://ontariohockeyleague.com/gamecentre/", "QMJHL":"http://theqmjhl.ca/gamecentre/"}
-leagueStartCodes = {"WHL":1014621, "OHL":22381, "QMJHL":26127}
-leagueEndCodes = {"WHL":1015412, "OHL":23061, "QMJHL":25784}
-
+leagueURLs = {"WHL":"http://whl.ca", "OHL":"http://ontariohockeyleague.com", "QMJHL":"http://theqmjhl.ca"}
+leagueStartCodes = {"WHL":1014621, "OHL":22381, "QMJHL":25784}
+leagueEndCodes = {"WHL":1015412, "OHL":23061, "QMJHL":26127}
 
 def scrape(league):
     url_base = leagueURLs.get(league)
     browser = webdriver.Chrome("/Users/colinrsmall/documents/GitHub/Prospect-Prospecting/chromedriver")
+    second_browser = webdriver.Chrome("/Users/colinrsmall/documents/GitHub/Prospect-Prospecting/chromedriver")
     games_by_player = []
-    for gameCode in range( leagueStartCodes.get(league), leagueEndCodes.get(league)):
-        game_url = url_base + str(gameCode) + "/boxscore"
-        print(game_url)
-        browser.get(game_url)
-        inner_html = browser.execute_script("return document.body.innerHTML")
-        parsed_html = BeautifulSoup(inner_html, "html.parser")
-        away_stats = parsed_html.select(".gamecentre-topscorers .stats-data-table")
-        home_stats = parsed_html.select(".gamecentre-lastfivegames .stats-data-table .table__tr--dark")
-        for row in home_stats:
-            columns = row.select("td")
-            game_stats = []
-            for cell in columns:
-                game_stats.append(cell.text)
-            game_stats.append(gameCode)
-            game_stats.append(parsed_html.select(".gamecentre-matchup__location")[0].text.split("-")[2].strip())
-            game_stats.append(parsed_html.select(".gamecentre-matchup-home .gamecentre-matchup__nickname")[0].text)
-            game_stats.append(parsed_html.select(".gamecentre-matchup__gamenumber")[0].text.split(":")[1].split("-")[0].strip())
-            games_by_player.append(game_stats)
-            games_stats = []
 
-        for row in home_stats:
-            columns = row.select("td")
-            game_stats = []
-            for cell in columns:
-                game_stats.append(cell.text)
-            game_stats.append(gameCode)
-            game_stats.append(parsed_html.select(".gamecentre-matchup__location")[0].text.split("-")[2].strip())
-            game_stats.append(parsed_html.select(".gamecentre-matchup-away .gamecentre-matchup__nickname")[0].text)
-            game_stats.append(parsed_html.select(".gamecentre-matchup__gamenumber")[0].text.split(":")[1].split("-")[0].strip())
-            games_by_player.append(game_stats)
-            games_stats = []
+    with open(league + "_stats.csv", "w") as stats_file:
+        wr = csv.writer(stats_file)
+        wr.writerow(["position", "number", "name", "birthday", "goals", "assists", "+/-", "shots", "pims", "fow", "game ID", "game date", "team", "game number", "team goals", "team assists", "team shots", "team pims", "player age"])
+        for gameCode in range(leagueStartCodes.get(league), leagueEndCodes.get(league)):
+            game_url = url_base + "/gamecentre/"+ str(gameCode) + "/boxscore"
+            print(game_url)
+            browser.get(game_url)
+            inner_html = browser.execute_script("return document.body.innerHTML")
+            parsed_html = BeautifulSoup(inner_html, "html.parser")
+            away_stats = parsed_html.select('tbody[data-reactid=".0.0.3.0.2.0.1.2.0.1"] .table__tr--dark')
+            home_stats = parsed_html.select('tbody[data-reactid=".0.0.3.0.2.1.1.2.0.1"] .table__tr--dark')
+            home_assists, home_goals, home_shots, home_pims = 0, 0, 0, 0;
+            away_assists, away_goals, away_shots, away_pims = 0, 0, 0, 0;
 
-        print(games_by_player)
+            for row in home_stats:
+                columns = row.select("td")
+                count = 0
+                for cell in columns:
+                    if count/3 == 1:
+                        home_goals += int(cell.text)
+                    if count/4 == 1:
+                        home_assists += int(cell.text)
+                    if count / 6 == 1:
+                         home_shots += int(cell.text)
+                    if count / 7 == 1:
+                        home_pims += int(cell.text)
+                    count = count+1
+
+            for row in away_stats:
+                columns = row.select("td")
+                count = 0
+                for cell in columns:
+                    if count/3 == 1: # / not % because I only want the cell in the 4th position
+                        away_goals += int(cell.text)
+                    if count/4 == 1:
+                        away_assists += int(cell.text)
+                    if count / 6 == 1:
+                        away_shots += int(cell.text)
+                    if count / 7 == 1:
+                        away_pims += int(cell.text)
+                    count = count+1
+
+            for row in home_stats:
+                columns = row.select("td")
+                game_stats = []
+                count = 0
+                for cell in columns:
+                    game_stats.append(cell.text)
+                    if count/2 == 1:
+                        url = url_base + (cell.find('a', href=True)["href"])
+                        second_browser.get(url)
+                        player_html = second_browser.execute_script("return document.body.innerHTML")
+                        parsed_player_html = BeautifulSoup(player_html, "html.parser")
+                        birthday_text = parsed_player_html.select('[data-reactid=".0.0.0.0.2.3.1"]')
+                        while len(birthday_text)==0:
+                            print("No text?")
+                            second_browser.refresh()
+                            player_html = second_browser.execute_script("return document.body.innerHTML")
+                            parsed_player_html = BeautifulSoup(player_html, "html.parser")
+                            birthday_text = parsed_player_html.select('[data-reactid=".0.0.0.0.2.3.1"]');
+                        if birthday_text[0].len != 0:
+                            birthday = parse(birthday_text[0].text)
+                        else:
+                            birthday = "no birthday"
+                        game_stats.append(birthday)
+                    count = count+1
+                game_stats.append(gameCode)
+                if league == "WHL":
+                    game_date = parse(parsed_html.select(".gamecentre-matchup__location")[0].text.split(" - ")[2].strip())
+                    game_stats.append(game_date)
+                if league == "OHL":
+                    game_date = parse(parsed_html.select(".gamecentre-matchup__location")[0].text.split(" - ")[1].strip())
+                    game_stats.append(game_date)
+                game_stats.append(parsed_html.select(".gamecentre-matchup-home .gamecentre-matchup__nickname")[0].text)
+                game_stats.append(parsed_html.select(".gamecentre-matchup__gamenumber")[0].text.split(":")[1].split("-")[0].strip())
+                game_stats.append(home_goals)
+                game_stats.append(home_assists)
+                game_stats.append(home_shots)
+                game_stats.append(home_pims)
+                game_stats.append(int(str((game_date - birthday)).split(",")[0].split(" ")[0])/365)
+                wr.writerow(game_stats)
+                games_stats = []
+
+            for row in away_stats:
+                columns = row.select("td")
+                game_stats = []
+                count = 0
+                for cell in columns:
+                    game_stats.append(cell.text)
+                    if count / 2 == 1:
+                        url = url_base + (cell.find('a', href=True)["href"])
+                        second_browser.get(url)
+                        player_html = second_browser.execute_script("return document.body.innerHTML")
+                        parsed_player_html = BeautifulSoup(player_html, "html.parser")
+                        while len(birthday_text)==0:
+                            print("No text?")
+                            second_browser.refresh()
+                            player_html = second_browser.execute_script("return document.body.innerHTML")
+                            parsed_player_html = BeautifulSoup(player_html, "html.parser")
+                            birthday_text = parsed_player_html.select('[data-reactid=".0.0.0.0.2.3.1"]');
+                        if birthday_text[0].len != 0:
+                            birthday = parse(birthday_text[0].text)
+                        else:
+                            birthday = "no birthday"
+                        game_stats.append(birthday)
+                    count = count+1
+                game_stats.append(gameCode)
+                if league != "OHL":
+                    game_date = parse(parsed_html.select(".gamecentre-matchup__location")[0].text.split(" - ")[2].strip())
+                    game_stats.append(game_date)
+                if league == "OHL":
+                    game_date = parse(parsed_html.select(".gamecentre-matchup__location")[0].text.split(" - ")[1].strip())
+                    game_stats.append(game_date)
+                game_stats.append(parsed_html.select(".gamecentre-matchup-away .gamecentre-matchup__nickname")[0].text)
+                game_stats.append(parsed_html.select(".gamecentre-matchup__gamenumber")[0].text.split(":")[1].split("-")[0].strip())
+                game_stats.append(away_goals)
+                game_stats.append(away_assists)
+                game_stats.append(away_shots)
+                game_stats.append(away_pims)
+                game_stats.append(int(str((game_date - birthday)).split(",")[0].split(" ")[0])/365)
+                wr.writerow(game_stats)
+                games_stats = []
+
+            print(games_by_player)
 
 scrape("WHL")
