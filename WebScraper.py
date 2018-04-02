@@ -16,15 +16,15 @@ from dateutil.parser import parse
 # qmjhl url: http://theqmjhl.ca/gamecentre/26127/boxscore
 
 leagueURLs = {"WHL":"http://whl.ca", "OHL":"http://ontariohockeyleague.com", "QMJHL":"http://theqmjhl.ca"}
-# leagueStartCodes = {"WHL":1014621, "OHL":22381, "QMJHL":25784}
-leagueStartCodes = {"WHL":1014621, "OHL":22782, "QMJHL":25784}
-leagueEndCodes = {"WHL":1015412, "OHL":23061, "QMJHL":26127}
+leagueStartCodes = {"WHL":1014621, "OHL":22768, "QMJHL":25784}
+# leagueStartCodes = {"WHL":1014621, "OHL":22381, "QMJHL":25784} actual start codez
+# leagueEndCodes = {"WHL":1015412, "OHL":23061, "QMJHL":26127} actual end-codes
+leagueEndCodes = {"WHL":1015412, "OHL":22782, "QMJHL":26127} # temporary endcode for OHL
 
 def scrape(league):
     url_base = leagueURLs.get(league)
     browser = webdriver.Chrome("/Users/colinrsmall/documents/GitHub/Prospect-Prospecting/chromedriver")
     second_browser = webdriver.Chrome("/Users/colinrsmall/documents/GitHub/Prospect-Prospecting/chromedriver")
-    games_by_player = []
 
     with open(league + "_stats.csv", "w") as stats_file:
         wr = csv.writer(stats_file)
@@ -42,31 +42,17 @@ def scrape(league):
 
             for row in home_stats:
                 columns = row.select("td")
-                count = 0
-                for cell in columns:
-                    if count/3 == 1:
-                        home_goals += int(cell.text)
-                    if count/4 == 1:
-                        home_assists += int(cell.text)
-                    if count / 6 == 1:
-                         home_shots += int(cell.text)
-                    if count / 7 == 1:
-                        home_pims += int(cell.text)
-                    count = count+1
+                home_goals += int(columns[3].text)
+                home_assists += int(columns[4].text)
+                home_shots += int(columns[6].text)
+                home_pims += int(columns[7].text)
 
             for row in away_stats:
                 columns = row.select("td")
-                count = 0
-                for cell in columns:
-                    if count/3 == 1: # / not % because I only want the cell in the 4th position
-                        away_goals += int(cell.text)
-                    if count/4 == 1:
-                        away_assists += int(cell.text)
-                    if count / 6 == 1:
-                        away_shots += int(cell.text)
-                    if count / 7 == 1:
-                        away_pims += int(cell.text)
-                    count = count+1
+                away_goals += int(columns[3].text)
+                away_assists += int(columns[4].text)
+                away_shots += int(columns[6].text)
+                away_pims += int(columns[7].text)
 
             for row in home_stats:
                 columns = row.select("td")
@@ -123,7 +109,8 @@ def scrape(league):
                         second_browser.get(url)
                         player_html = second_browser.execute_script("return document.body.innerHTML")
                         parsed_player_html = BeautifulSoup(player_html, "html.parser")
-                        while len(birthday_text)==0:
+                        birthday_text = parsed_player_html.select('[data-reactid=".0.0.0.0.2.3.1"]');
+                        while len(birthday_text) == 0:
                             print("No text?")
                             second_browser.refresh()
                             player_html = second_browser.execute_script("return document.body.innerHTML")
@@ -154,7 +141,5 @@ def scrape(league):
                     game_stats.append(int(str((game_date - birthday)).split(",")[0].split(" ")[0])/365)
                 wr.writerow(game_stats)
                 games_stats = []
-
-            print(games_by_player)
 
 scrape("OHL")
