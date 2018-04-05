@@ -80,13 +80,13 @@ def getPlayerBirthday(league, cell, name):
         return player_birthdays.get(name)
 
 
-def scrape(league):
+def scrape(league, start_year1, end_year1, start_year2, end_year2):
     url_base = leagueURLs.get(league)
 
-    with open(league + "_stats.csv", "w") as stats_file:
+    with open(league + "_" + start_year1 + "-" + end_year1 + "_to_" + start_year2 + "-" + end_year2 + "_stats.csv", "w") as stats_file:
         wr = csv.writer(stats_file)
         wr.writerow(["position", "number", "name", "birthday", "goals", "assists", "+/-", "shots", "pims", "fow", "game ID", "game date", "team", "game number", "team goals", "team assists", "team shots", "team pims", "player age"])
-        for gameCode in range(leagueStartCodes.get(league), leagueEndCodes.get(league)):
+        for gameCode in range(leagueStartCodes.get(league+"_"+start_year1+"-"+end_year1), leagueEndCodes.get(league+"_"+start_year2+"-"+end_year2)):
             game_url = url_base + "/gamecentre/"+ str(gameCode) + "/boxscore"
             print(game_url)
             browser.get(game_url)
@@ -120,4 +120,4 @@ def scrape(league):
                 wr.writerow(getPlayerStats(False, league, row, gameCode, parsed_html, away_team_stats))
 
 
-scrape("OHL_2017-2018")
+scrape("OHL", "2017", "2018", "2017", "2018")
