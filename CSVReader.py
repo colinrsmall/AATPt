@@ -1,18 +1,18 @@
 import csv
-import re
+from dateutil.parser import parse
 
-
-def read(league):
+def read(league, start_year1, end_year1, start_year2, end_year2):
     players = {}
-    with open(league + "_stats.csv", "r") as league_stats:
+    with open(league + "_" + start_year1 + "-" + end_year1 + "_to_" + start_year2 + "-" + end_year2 + "_stats.csv", "r") as league_stats:
         stats_reader = csv.reader(league_stats, delimiter=',')
         for row in stats_reader:
             try:
                 player_name = row[2].split(" - ")[0].strip().split("*")[0].strip()
+                position = row[0]
                 team_name = row[12]
                 goals = float(row[4])
                 assists = float(row[5])
-                shots = float(row[7])
+                shots = float(row[7].split('/')[0])
                 pm = float(row[6])
                 pim = float(row[8])
                 points = goals + assists
@@ -22,15 +22,20 @@ def read(league):
                 team_p = team_a + team_g
                 team_s = float(row[16])
                 team_pim = float(row[17])
+                season = row[19]
+                # ignore most recent season for draft re-doing purposes
+                eligibility = parse('September 15, 1999') >= parse(row[3]) >= parse('January 1, 1997')
             except ValueError:
+                print( ValueError )
+                print( row )
                 continue
-            if players.get(player_name) is None:
-                players[player_name] = Player(player_name)
-            players.get(player_name).addStats(team_name, points, goals, assists, shots, pm, pim, age, team_g, team_a, team_p, team_s, team_pim)
+            if players.get(player_name+season) is None:
+                players[player_name+season] = Player(player_name, season, position, eligibility)
+            players.get(player_name+season).addStats(team_name, points, goals, assists, shots, pm, pim, age, team_g, team_a, team_p, team_s, team_pim)
 
-        with open(league + "_per_team.csv", "w") as stats_file:
+        with open(league + "_" + start_year1 + "-" + end_year1 + "_to_" + start_year2 + "-" + end_year2 + "_per_team.csv", "w") as stats_file:
             wr = csv.writer(stats_file)
-            wr.writerow(["Player Name", "Team", "Games Played", "Goals Per Team Goals %", "Assists Per Team Assists %", "Points Per Team Points %", "Shots Per Team Shots %", "PIM Per Team PIM %", "Player Age"])
+            wr.writerow(["Player Name", "Position", "Team", "Season", "Games Played", "Goals Per Team Goals %", "Assists Per Team Assists %", "Points Per Team Points %", "Total Points", "Total Team Points", "Player Age", "Draft Eligibility"])
             for player in players.values():
                 for stat in player.pPtPT():
                     wr.writerow(stat)
@@ -38,8 +43,11 @@ def read(league):
 
 class Player:
 
-    def __init__(self, name):
+    def __init__(self, name, season, position, eligibility):
         self.name = name
+        self.season = season
+        self.position = position
+        self.eligibility = eligibility
         self.p_per_team = {}
         self.g_per_team = {}
         self.a_per_team = {}
@@ -60,16 +68,18 @@ class Player:
             try:
                 stats = []
                 stats.append(self.name)
+                stats.append(self.position)
                 stats.append(key)
+                stats.append(self.season)
                 stats.append(self.gp_per_team.get(key))
                 stats.append(self.g_per_team.get(key) / self.team_p.get(key))
                 stats.append(self.a_per_team.get(key) / self.team_p.get(key))
                 stats.append(self.p_per_team.get(key) / self.team_p.get(key))
-                stats.append(self.s_per_team.get(key) / self.team_p.get(key))
-                stats.append(self.pim_per_team.get(key) / self.team_p.get(key))
+                stats.append(self.p_per_team.get(key))
+                stats.append(self.team_p.get(key))
                 stats.append(self.age_per_team.get(key))
-                stats.append("\n")
                 team_stats.append(stats)
+                stats.append(self.eligibility)
             except ZeroDivisionError:
                 print(0)
         return team_stats
@@ -140,4 +150,4 @@ class Player:
         else:
             self.age_per_team[team] = (age + self.age_per_team[team])/2
 
-read("WHL")
+read("OHL", "2007", "2008", "2017", "2018")
