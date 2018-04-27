@@ -24,7 +24,7 @@ def read(league, start_year1, end_year1, start_year2, end_year2):
                 team_pim = float(row[17])
                 season = row[19]
                 # ignore most recent season for draft re-doing purposes
-                eligibility = parse('September 15, 1999') >= parse(row[3]) >= parse('January 1, 1997')
+                eligibility = parse('September 15, 2000') >= parse(row[3]) >= parse('January 1, 1998')
             except ValueError:
                 print( ValueError )
                 print( row )
