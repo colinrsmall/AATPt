@@ -135,16 +135,21 @@ whl_data['League'] = 'WHL'
 ohl_data['League'] = 'OHL'
 complete_data = qmjhl_data.append(whl_data).append(ohl_data)
 complete_data_ell = complete_data.loc[complete_data['Draft Eligibility'] == True]
+complete_data_ell = complete_data_ell[~complete_data_ell.Season.isin(['2016-17 Regular Season', '2017-18 Regular Season','2015-16 Regular Season','2014-15 Regular Season',' 2015-16 Regular Season',' 2014-15 Regular Season'])]
 
+ell_temp = complete_data_ell.groupby(['Player Name']).agg({'Position':['first'],'Adjusted Point %':['std'], 'Season':['count'], 'League':['first']})
 temp = complete_data.groupby(['Player Name']).agg({'Position':['first'],'Adjusted Point %':['std'], 'Season':['count'], 'League':['first']})
 
 # Collapse player entries into single entries per player
 complete_data_collapsed = complete_data.groupby('Player Name').mean()
+complete_data_collapsed_ell = complete_data_ell.groupby('Player Name').mean()
 
 # Concat the now collapsed player whl_data with positions and standard deviations
 complete_data.to_csv('complete_data.csv')
 complete_data_collapsed = pd.concat([complete_data_collapsed, temp], axis=1)
-complete_data_collapsed_ell = complete_data_collapsed.loc[complete_data_collapsed['Draft Eligibility'] == True]
+complete_data_collapsed_ell = pd.concat([complete_data_collapsed_ell, ell_temp], axis=1)
+complete_data_collapsed_ell = complete_data_collapsed_ell[complete_data_collapsed_ell['Player Age'] < 18.3]
+complete_data_collapsed_ell = complete_data_collapsed_ell[complete_data_collapsed_ell['Games Played'] > 50]
 complete_data_collapsed.to_csv('complete_data_collapsed.csv')
 complete_data_collapsed_ell.to_csv('complete_data_collapsed_ell.csv')
 

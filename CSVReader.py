@@ -24,7 +24,7 @@ def read(league, start_year1, end_year1, start_year2, end_year2):
                 team_pim = float(row[17])
                 season = row[19]
                 # ignore most recent season for draft re-doing purposes
-                eligibility = parse('September 15, 2000') >= parse(row[3]) >= parse('January 1, 1998')
+                eligibility = parse('September 15, 1996') >= parse(row[3]) >= parse('January 1, 1994')
             except ValueError:
                 print( ValueError )
                 print( row )
@@ -150,4 +150,6 @@ class Player:
         else:
             self.age_per_team[team] = (age + self.age_per_team[team])/2
 
+read("WHL", "2007", "2008", "2017", "2018")
 read("OHL", "2007", "2008", "2017", "2018")
+read("QMJHL", "2007", "2008", "2017", "2018")
