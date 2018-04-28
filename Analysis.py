@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import pandas as pd
+import re
+
+def fixSeason(seasonText):
+    r = re.search('\d{6}', str(seasonText)) 
+    if r: return r.group(0)[:4] + "-" + r.group(0)[4:6] + " Regular Season"
+    else: return seasonText
+
 
 '''~~~~~~~~~~~~~ QMJHL ~~~~~~~~~~~~~~~'''
 
@@ -9,6 +16,7 @@ qmjhl_data = pd.read_csv("QMJHL_2007-2008_to_2017-2018_per_team.csv")
 qmjhl_data = qmjhl_data[qmjhl_data.Season.str.contains('Playoffs') == False]
 qmjhl_data = qmjhl_data[qmjhl_data.Season.str.contains('All-Star') == False]
 qmjhl_data = qmjhl_data.drop(['Total Team Points', 'Total Points', 'Assists Per Team Assists %', 'Goals Per Team Goals %'], axis=1)
+qmjhl_data['Season'] = qmjhl_data['Season'].apply( lambda x: str(x)[0:8] + ' Regular Season')
 
 # Drop players who have played less than 10 games
 qmjhl_data = qmjhl_data[qmjhl_data['Games Played'] > 10]
@@ -85,6 +93,7 @@ whl_data = pd.read_csv("whl_2007-2008_to_2017-2018_per_team.csv")
 whl_data = whl_data[whl_data.Season.str.contains('Playoffs') == False]
 whl_data = whl_data[whl_data.Season.str.contains('All-Star') == False]
 whl_data = whl_data.drop(['Total Team Points', 'Total Points', 'Assists Per Team Assists %', 'Goals Per Team Goals %'], axis=1)
+whl_data['Season'] = whl_data['Season'].apply( lambda x: fixSeason(x) )
 
 # Drop players who have played less than 10 games
 whl_data = whl_data[whl_data['Games Played'] > 10]
@@ -108,7 +117,7 @@ whl_data_collapsed = pd.concat([whl_data_collapsed, temp], axis=1)
 
 # Sort by adjusted PPTPt%
 whl_data_collapsed = whl_data_collapsed.sort_values(by=['Adjusted Point %'], ascending=False)
-
+whl_data.to_csv('whl_data.csv')
 whl_data_collapsed.to_csv("whl_2007-2008_to_2017-2018_per_team_adjusted.csv")
 
 # Make new table of just defensemen
@@ -121,15 +130,19 @@ whl_eligible_defensemen = whl_eligible.loc[whl_eligible['Position'] == 'D']
 qmjhl_data['League Adjusted Point %'] = qmjhl_data['Adjusted Point %'].apply( lambda x: 1.18038183*x)
 whl_data['League Adjusted Point %'] = whl_data['Adjusted Point %'].apply( lambda x: 0.9718157182*x)
 ohl_data['League Adjusted Point %'] = ohl_data['Adjusted Point %']
+qmjhl_data['League'] = 'QMJHL'
+whl_data['League'] = 'WHL'
+ohl_data['League'] = 'OHL'
 complete_data = qmjhl_data.append(whl_data).append(ohl_data)
 complete_data_ell = complete_data.loc[complete_data['Draft Eligibility'] == True]
 
-temp = complete_data.groupby(['Player Name']).agg({'Position':['first'],'Adjusted Point %':['std'], 'Season':['count']})
+temp = complete_data.groupby(['Player Name']).agg({'Position':['first'],'Adjusted Point %':['std'], 'Season':['count'], 'League':['first']})
 
 # Collapse player entries into single entries per player
 complete_data_collapsed = complete_data.groupby('Player Name').mean()
 
 # Concat the now collapsed player whl_data with positions and standard deviations
+complete_data.to_csv('complete_data.csv')
 complete_data_collapsed = pd.concat([complete_data_collapsed, temp], axis=1)
 complete_data_collapsed_ell = complete_data_collapsed.loc[complete_data_collapsed['Draft Eligibility'] == True]
 complete_data_collapsed.to_csv('complete_data_collapsed.csv')
