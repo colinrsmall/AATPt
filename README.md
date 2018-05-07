@@ -26,11 +26,11 @@ Average Games Played — The average games played of each season for the pla
 Seasons Played
 
 ### Some Findings:
-Unsurprisingly, 16-year-old (and expected 2020 NHL Draft first overall pick) Alexis Lafreniere owns the highest AATPt% across all three leagues from the 2007–2008 season to the 2017–2018 season, at 0.4363. His raw AATPt% is 0.3881 (good for 26th overall in that time frame for the QMJHL), due to having played only one season so far at an average age of 16.227.
-Despite being unranked in this year’s coming draft, RW Trey Fix-Wolansky of the Edmonton Oil Kings has the third highest AATPt% of presently undrafted, draft-eligible players. However, he is an overager of one year, and EliteProspects lists him as only 5'8" 165 lbs. I haven’t been able to find any scouting report on him.
-Defenseman Ryan Merkley’s AATPt% of 0.3065 would put him second overall in all presently undrafted, draft-eligible players. This is a whole 0.1046 ahead of the next defensemen, overager Thomas Gregoire.
-The most-consistent player award goes to defenseman Steven Varga, playing 4 seasons with an AATPt% standard deviation of only 0.0014177, making him more consistent than 90% of other players.
-The least-consistent player award goes to forward Nicolas Roy, playing 3 seasons with an AATPt% standard deviation of 0.2096. Eric O’Dell leads the pack of players who have played more than 3 seasons, with a standard deviation of 0.1191.
+- Unsurprisingly, 16-year-old (and expected 2020 NHL Draft first overall pick) Alexis Lafreniere owns the highest AATPt% across all three leagues from the 2007–2008 season to the 2017–2018 season, at 0.4363. His raw AATPt% is 0.3881 (good for 26th overall in that time frame for the QMJHL), due to having played only one season so far at an average age of 16.227.
+- Despite being unranked in this year’s coming draft, RW Trey Fix-Wolansky of the Edmonton Oil Kings has the third highest AATPt% of presently undrafted, draft-eligible players. However, he is an overager of one year, and EliteProspects lists him as only 5'8" 165 lbs. I haven’t been able to find any scouting report on him.
+- Defenseman Ryan Merkley’s AATPt% of 0.3065 would put him second overall in all presently undrafted, draft-eligible players. This is a whole 0.1046 ahead of the next defensemen, overager Thomas Gregoire.
+- The most-consistent player award goes to defenseman Steven Varga, playing 4 seasons with an AATPt% standard deviation of only 0.0014177, making him more consistent than 90% of other players.
+- The least-consistent player award goes to forward Nicolas Roy, playing 3 seasons with an AATPt% standard deviation of 0.2096. Eric O’Dell leads the pack of players who have played more than 3 seasons, with a standard deviation of 0.1191.
 
 ### Forward Rankings
 
