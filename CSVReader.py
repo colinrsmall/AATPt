@@ -10,19 +10,19 @@ def read(league, start_year1, end_year1, start_year2, end_year2):
                 player_name = row[2].split(" - ")[0].strip().split("*")[0].strip()
                 position = row[0]
                 team_name = row[12]
-                goals = float(row[4])
-                assists = float(row[5])
-                shots = float(row[7].split('/')[0])
-                pm = float(row[6])
-                pim = float(row[8])
+                goals = float(row[5])
+                assists = float(row[6])
+                shots = float(row[8].split('/')[0])
+                pm = float(row[7])
+                pim = float(row[9])
                 points = goals + assists
-                age = float(row[18].strip())
-                team_g = float(row[14])
-                team_a = float(row[15])
+                age = float(row[19].strip())
+                team_g = float(row[15])
+                team_a = float(row[16])
                 team_p = team_a + team_g
-                team_s = float(row[16])
-                team_pim = float(row[17])
-                season = row[19]
+                team_s = float(row[17])
+                team_pim = float(row[18])
+                season = row[20]
                 # ignore most recent season for draft re-doing purposes
                 eligibility = parse('September 15, 1996') >= parse(row[3]) >= parse('January 1, 1994')
             except ValueError:

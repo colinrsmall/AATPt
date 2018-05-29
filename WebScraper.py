@@ -19,13 +19,14 @@ import time
 # qmjhl url: http://theqmjhl.ca/gamecentre/26127/boxscore
 
 leagueURLs = {"WHL":"http://whl.ca", "OHL":"http://ontariohockeyleague.com", "QMJHL":"http://theqmjhl.ca"}
-# leagueStartCodes = {"WHL_2017-2018":1010576, "OHL_2017-2018":22381, "QMJHL_2017-2018":25784, "WHL_2014-2015":1010890, "OHL_2014-2015":19928, "WHL_2007-2008":1004352, "OHL_2007-2008":14458, "QMJHL_2007-2008":22528}
-leagueStartCodes = {"WHL_2017-2018":1010576, "OHL_2017-2018":22381, "QMJHL_2017-2018":25784, "WHL_2014-2015":1010890, "OHL_2014-2015":19928, "WHL_2007-2008":1004352, "OHL_2007-2008":14458, "QMJHL_2007-2008":25119, 'WHL_2000-2001':23081, 'OHL_2000-2001':8334, 'QMJHL_2000-2001':18469}
-leagueEndCodes = {"WHL_2017-2018":1015412, "OHL_2017-2018":23058, "QMJHL_2017-2018":26228, 'WHL_2006-2007':1004352, 'OHL_2006-2007':14458, 'QMJHL_2006-2007':25119}
+# leagueStartCodes = {"WHL_2017-2018":1010576, "OHL_2017-2018":22381, "QMJHL_2017-2018":25784, "WHL_2014-2015":1010890, "OHL_2014-2015":19928, "WHL_2007-2008":1004352, "OHL_2007-2008":14458, "QMJHL_2007-2008":22528, 'WHL_2000-2001':23081, 'OHL_2000-2001':8334, 'QMJHL_2000-2001':18469}
+leagueStartCodes = {"WHL_2017-2018":1010576, "OHL_2017-2018":22381, "QMJHL_2017-2018":25784, "WHL_2014-2015":1010890, "OHL_2014-2015":19928, "WHL_2007-2008":1004352, "OHL_2007-2008":14458, "QMJHL_2007-2008":22528, 'WHL_2000-2001':23638, 'OHL_2000-2001':8834, 'QMJHL_2000-2001':18476}
+leagueEndCodes = {"WHL_2017-2018":1015412, "OHL_2017-2018":23058, "QMJHL_2017-2018":26228, 'WHL_2006-2007':1004352, 'OHL_2006-2007':14458, 'QMJHL_2006-2007':22528}
 browser = webdriver.Chrome("/Users/colinrsmall/documents/GitHub/Prospect-Prospecting/chromedriver")
 second_browser = webdriver.Chrome("/Users/colinrsmall/documents/GitHub/Prospect-Prospecting/chromedriver")
 player_birthdays = {}
 player_draft_status = {}
+
 
 def getPlayerStats(home, league, row, game_code, html, team_stats, url):
     columns = row.select("td")
@@ -55,8 +56,11 @@ def getPlayerStats(home, league, row, game_code, html, team_stats, url):
 
     try:
         try:
-            if '-' in location_raw[0].text:
+            if '-' in location_raw[0].text and league != 'QMJHL':
                 game_date = parse(location_raw[0].text.split(" - ")[2].strip())
+                game_stats.append(game_date)
+            elif '-' in location_raw[0].text and league == 'QMJHL':
+                game_date = parse(location_raw[0].text.split("-")[1].strip())
                 game_stats.append(game_date)
             else:
                 game_date = parse(location_raw[0].text)
@@ -78,9 +82,11 @@ def getPlayerStats(home, league, row, game_code, html, team_stats, url):
 
     for stat in team_stats:
         game_stats.append(stat)
-    if birthday == "no birthday":
+    if birthday == "no birthday" or birthday == 'Undrafted':
         game_stats.append("no birthday")
     else:
+        print(game_date)
+        print(birthday)
         game_stats.append(int(str((game_date - birthday)).split(",")[0].split(" ")[0]) / 365)
     season = ""
     for part in html.select('[data-reactid=".0.0.0.3"]')[0].text.split(" - ")[1:]:
@@ -134,7 +140,7 @@ def getPlayerBirthday(league, cell, name):
         # print(birthday_text)
         count = 0
         while len(birthday_text) == 0 or birthday_text[0].text.strip() == "0000-00-00":
-            if count > 5:
+            if count > 2:
                 return ["no birthday", 'no draft']
             # print("No birthday text?")
             second_browser.refresh()
@@ -168,6 +174,8 @@ def scrape(league, start_year1, end_year1, start_year2, end_year2):
         wr = csv.writer(stats_file)
         wr.writerow(["position", "number", "name", "birthday", "draft status","goals", "assists", "+/-", "shots", "pims", "fow", "game ID", "game date", "team", "game number", "team goals", "team assists", "team shots", "team pims", "player age", "season"])
         for gameCode in range(leagueStartCodes.get(league+"_"+start_year1+"-"+end_year1), leagueEndCodes.get(league+"_"+start_year2+"-"+end_year2)):
+            if league == 'OHL' and gameCode in range(27597,999999):
+                continue
             game_url = url_base + "/gamecentre/" + str(gameCode) + "/boxscore"
             # print(game_url)
             browser.get(game_url)
@@ -178,7 +186,7 @@ def scrape(league, start_year1, end_year1, start_year2, end_year2):
             count = 0
             skip = False
             while len(away_stats) == 0 or len(home_stats) == 0:
-                if count > 5:
+                if count > 1:
                     # print("no stats found after fifth try, skipping")
                     skip = True
                     break
@@ -231,4 +239,14 @@ def scrape(league, start_year1, end_year1, start_year2, end_year2):
             pb_count += 1
             progress_bar.update(pb_count)
 
-scrape("QMJHL", "2000", "2001", "2006", "2007")
+
+while True:
+    league_input = input("Enter a league (OHL, QMJHL, CHL): ")
+    league_start_years = input('Please enter a start season (written as "year-year"): ')
+    league_end_years = input('Please enter an end season (written as "year-year"): ')
+    try:
+        scrape(str(league_input), str(league_start_years).split('-')[0], str(league_start_years).split('-')[1], str(league_end_years).split('-')[0], str(league_end_years).split('-')[1])
+        break
+    except Exception as e:
+        print(e)
+        print("Please enter valid input")
